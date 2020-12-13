@@ -8,6 +8,7 @@ import Calculator
 ACCEPT = 0
 CANCEL = -1
 
+# implement dialog for input "region, latitude, longitude"
 class InputWidget(QDialog):
     def __init__(self, title):
         super().__init__()
@@ -21,18 +22,22 @@ class InputWidget(QDialog):
     def initUI(self, title):
         self.setWindowTitle(title)
 
+        # Label to print "region, latitude, longitude"
         regionLabel = QLabel("&지역:")
         latitudeLabel = QLabel("&위도:")
         longitudeLabel = QLabel("&경도: ")
 
+        # text color: white
         regionLabel.setStyleSheet("color: white")
         latitudeLabel.setStyleSheet("color: white")
         longitudeLabel.setStyleSheet("color: white")
 
+        # LineEdit for inputs
         self.regionLineEdit = QLineEdit()
         self.latitudeLineEdit = QLineEdit()
         self.longitudeLineEdit = QLineEdit()
 
+        # text color: white
         self.regionLineEdit.setStyleSheet("color: white")
         self.latitudeLineEdit.setStyleSheet("color: white")
         self.longitudeLineEdit.setStyleSheet("color: white")
@@ -48,6 +53,7 @@ class InputWidget(QDialog):
         self.inputBox = QWidget()
         self.buttonBox = QWidget()
 
+        # Buttons (Ok, Cancel)
         okButton = QPushButton("&OK")
         okButton.setDefault(True)
         okButton.clicked.connect(self.okButton_on_clicked)
@@ -55,6 +61,7 @@ class InputWidget(QDialog):
         cancelButton = QPushButton("&Cancel")
         cancelButton.clicked.connect(self.cancelButton_on_clicked)
 
+        # set layouts
         gridLayout = QGridLayout()
         gridLayout.addWidget(regionLabel, 0, 0)
         gridLayout.addWidget(self.regionLineEdit, 0, 1)
@@ -76,6 +83,7 @@ class InputWidget(QDialog):
         self.show()
 
     def okButton_on_clicked(self):
+        # get inputs from LineEdit
         self.mode = ACCEPT
         self.myRegion = self.regionLineEdit.text()
         self.myLatitude = float(self.latitudeLineEdit.text())
@@ -91,6 +99,7 @@ class App(QMainWindow, QWidget):
     VERY_DANGER = 1
     SEMI_DANGER = 2
 
+    # Height of Notification image
     NORMAL_HEIGHT = 160
     NOTIFI_HEIGHT = 240
     OTHER_HEIGHT = 130
@@ -108,6 +117,7 @@ class App(QMainWindow, QWidget):
         qtFrame.moveCenter(centerPoint)
         self.resize(700, 700)
 
+        # Create mainViewWidget
         self.mainViewWidget = QWidget()
         self.mainViewWidget.setLayout(self.createMainView())
 
@@ -123,6 +133,7 @@ class App(QMainWindow, QWidget):
                                   "border-radius: 40px;")
         totalWidget.setFixedSize(630, 630)
 
+        # 3 notifications are displayed
         self.mainLayout = QVBoxLayout()
         self.notiText1 = QLabel()
         self.notiText2 = QLabel()
@@ -150,14 +161,7 @@ class App(QMainWindow, QWidget):
         self.notiText2.setFont(font)
         self.notiText3.setFont(font)
 
-        """
-        self.notiText1.setText("<p>위험! 해당 지역은 <font color=red>00월 00일</font></p>"
-                               "<p>확진자가 방문한 경로입니다!</p>"
-                               "방역일: 2020년 00월 00일")
-        self.notiText1.setWordWrap(True)
-        self.notiText1.setAlignment(Qt.AlignCenter)
-        """
-
+        # Set text of notifications
         self.notiText1.setText(
             "<p style=\"font-size:25px\"><font color=\"#88EEFF\">&nbsp; &nbsp; &nbsp;●</font> 날씨 &nbsp;|  &nbsp;Bixby 제안</p>"
             "<p style=\"font-size:30px\"> &nbsp; &nbsp;  대구광역시의 날씨 보기</p>")
@@ -165,17 +169,18 @@ class App(QMainWindow, QWidget):
         self.notiText1.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
 
         self.notiText2.setText(
-            "<p style=\"font-size:25px\"><font color=\"#2E75B6\">&nbsp; &nbsp; &nbsp;●</font> 포이스북 알림</p>"
-            "<p style=\"font-size:30px\"> &nbsp; &nbsp; 이감자님의 새로운 소식을 확인하세요</p>")
+            "<p style=\"font-size:25px\"><font color=\"#FF6699\">&nbsp; &nbsp; &nbsp;●</font> 인스타그램 알림</p>"
+            "<p style=\"font-size:30px\"> &nbsp; &nbsp; 최감자님이 스토리를 올렸습니다.</p>")
         self.notiText2.setWordWrap(True)
         self.notiText2.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
 
         self.notiText3.setText(
             "<p style=\"font-size:25px\"><font color=\"yellow\">&nbsp; &nbsp; &nbsp;●</font> 감자톡 알림</p>"
-            "<p style=\"font-size:30px\"> &nbsp; &nbsp; 김감자: 엽떡 먹으러 가자!!!!!</p>")
+            "<p style=\"font-size:30px\"> &nbsp; &nbsp; 김감자: 햄버거 먹으러 가자!!!!!</p>")
         self.notiText3.setWordWrap(True)
         self.notiText3.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
 
+        # add widgets to mainLayout
         self.mainLayout.addWidget(self.notiText1, 1, Qt.AlignHCenter)
         self.mainLayout.addWidget(self.notiText2, 1, Qt.AlignHCenter)
         self.mainLayout.addWidget(self.notiText3, 1, Qt.AlignHCenter)
@@ -186,24 +191,32 @@ class App(QMainWindow, QWidget):
         return totalLayout
 
     def keyPressEvent(self, e):
+        # press enter key to display Dialog
         if e.key() == Qt.Key_Return or e.key() == Qt.Key_Enter:
             self.user = InputWidget("My Location")
 
+            # if user clicked "OK" button
             if self.user.mode != CANCEL:
+                # connect DB to get info
                 self.db = DBManager.DBManager('./path.db')
 
                 self.adjacent = self.db.select_data(self.user.myRegion)
                 self.userloc = (self.user.myLatitude, self.user.myLongitude)
 
                 adjList = Calculator.adjacent_list(self.userloc, self.adjacent)
+
                 if adjList[0] == self.VERY_DANGER:
                     self.showScreen(self.VERY_DANGER, adjList)
 
                 elif adjList[0] == self.SEMI_DANGER:
                     self.showScreen(self.SEMI_DANGER, adjList)
 
+                self.db.close_db()
 
+    # show infos on the notification
     def showScreen(self, mode, adjList):
+
+        # red notification
         if mode == self.VERY_DANGER:
             self.notiText1.setFixedSize(550, 240)
             self.notiText2.setFixedSize(550, 130)
@@ -232,6 +245,7 @@ class App(QMainWindow, QWidget):
             self.notiText3.setWordWrap(True)
             self.notiText3.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
 
+        # yello notification
         elif mode == self.SEMI_DANGER:
             self.notiText1.setFixedSize(550, 240)
             self.notiText2.setFixedSize(550, 130)
